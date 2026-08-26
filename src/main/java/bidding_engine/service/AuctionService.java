@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import bidding_engine.model.BidRequest;
+
 @Service
 public class AuctionService {
 
@@ -48,5 +52,47 @@ public class AuctionService {
 
     public Mono<Auction> findById(UUID auctionId) {
         return Mono.justOrEmpty(auctions.get(auctionId));
+    }
+
+    public Mono<Auction> placeBid(UUID auctionId, BidRequest bidRequest) {
+        return Mono.defer(() -> {
+            synchronized (auctions) {
+                Auction auction = auctions.get(auctionId);
+
+                if (auction == null) {
+                    return Mono.error(new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Auction not found"
+                    ));
+                }
+
+                if (auction.status() != AuctionStatus.OPEN || Instant.now().isAfter(auction.endsAt())) {
+                    return Mono.error(new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Auction is closed"
+                    ));
+                }
+
+                if (bidRequest.amount().compareTo(auction.currentHighestBid()) <= 0) {
+                    return Mono.error(new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Bid amount must be higher than the current highest bid"
+                    ));
+                }
+
+                Auction updatedAuction = new Auction(
+                        auction.id(),
+                        auction.title(),
+                        bidRequest.amount(),
+                        bidRequest.bidderId(),
+                        auction.endsAt(),
+                        auction.status()
+                );
+
+                auctions.put(auctionId, updatedAuction);
+
+                return Mono.just(updatedAuction);
+            }
+        });
     }
 }

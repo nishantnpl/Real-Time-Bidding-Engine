@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import bidding_engine.model.BidRequest;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/auctions")
@@ -33,5 +37,12 @@ public class AuctionController {
         return auctionService.findById(auctionId)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+    @PostMapping("/{auctionId}/bids")
+    public Mono<Auction> placeBid(
+            @PathVariable UUID auctionId,
+            @Valid @RequestBody BidRequest bidRequest
+    ) {
+        return auctionService.placeBid(auctionId, bidRequest);
     }
 }
