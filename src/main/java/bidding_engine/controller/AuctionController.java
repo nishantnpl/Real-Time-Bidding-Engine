@@ -1,21 +1,15 @@
 package bidding_engine.controller;
 
-import java.util.UUID;
-
 import bidding_engine.model.Auction;
+import bidding_engine.model.BidRequest;
 import bidding_engine.service.AuctionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import bidding_engine.model.BidRequest;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auctions")
@@ -28,21 +22,29 @@ public class AuctionController {
     }
 
     @GetMapping
-    public Flux<Auction> findAll() {
+    public Flux<Auction> getAllAuctions() {
         return auctionService.findAll();
     }
 
-    @GetMapping("/{auctionId}")
-    public Mono<ResponseEntity<Auction>> findById(@PathVariable UUID auctionId) {
-        return auctionService.findById(auctionId)
+    @GetMapping("/{id}")
+    public Mono<ResponseEntity<Auction>> getAuctionById(@PathVariable UUID id) {
+        return auctionService.findById(id)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
-    @PostMapping("/{auctionId}/bids")
-    public Mono<Auction> placeBid(
-            @PathVariable UUID auctionId,
-            @Valid @RequestBody BidRequest bidRequest
+
+    @PostMapping("/{id}/bids")
+    public Mono<ResponseEntity<Auction>> placeBid(
+            @PathVariable UUID id,
+            @RequestBody BidRequest bidRequest
     ) {
-        return auctionService.placeBid(auctionId, bidRequest);
+        return auctionService.placeBid(id, bidRequest)
+                .map(ResponseEntity::ok)
+                .onErrorResume(
+                        org.springframework.web.server.ResponseStatusException.class,
+                        ex -> Mono.just(ResponseEntity
+                                .status(ex.getStatusCode())
+                                .build())
+                );
     }
 }
