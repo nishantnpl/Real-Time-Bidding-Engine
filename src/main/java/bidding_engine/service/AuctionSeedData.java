@@ -28,6 +28,7 @@ public class AuctionSeedData {
                 new BigDecimal("1200.00"),
                 "user-001",
                 Instant.now().plus(Duration.ofHours(2)),
+                Instant.now().plus(Duration.ofHours(2)).toEpochMilli(),
                 AuctionStatus.OPEN
         );
 
@@ -37,6 +38,7 @@ public class AuctionSeedData {
                 new BigDecimal("650.00"),
                 "user-002",
                 Instant.now().plus(Duration.ofHours(4)),
+                Instant.now().plus(Duration.ofHours(4)).toEpochMilli(),
                 AuctionStatus.OPEN
         );
 

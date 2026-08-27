@@ -2,7 +2,9 @@ package bidding_engine.controller;
 
 import bidding_engine.model.Auction;
 import bidding_engine.model.BidRequest;
+import bidding_engine.model.BidResult;
 import bidding_engine.service.AuctionService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,25 +28,23 @@ public class AuctionController {
         return auctionService.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Mono<ResponseEntity<Auction>> getAuctionById(@PathVariable UUID id) {
-        return auctionService.findById(id)
+    @GetMapping("/{auctionId}")
+    public Mono<ResponseEntity<Auction>> getAuctionById(
+            @PathVariable UUID auctionId
+    ) {
+        return auctionService.findById(auctionId)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{id}/bids")
-    public Mono<ResponseEntity<Auction>> placeBid(
-            @PathVariable UUID id,
-            @RequestBody BidRequest bidRequest
+    @PostMapping("/{auctionId}/bids")
+    public Mono<ResponseEntity<BidResult>> placeBid(
+            @PathVariable UUID auctionId,
+            @Valid @RequestBody BidRequest bidRequest
     ) {
-        return auctionService.placeBid(id, bidRequest)
-                .map(ResponseEntity::ok)
-                .onErrorResume(
-                        org.springframework.web.server.ResponseStatusException.class,
-                        ex -> Mono.just(ResponseEntity
-                                .status(ex.getStatusCode())
-                                .build())
-                );
+        return auctionService.placeBid(auctionId, bidRequest)
+                .map(result -> result.accepted()
+                        ? ResponseEntity.ok(result)
+                        : ResponseEntity.status(HttpStatus.CONFLICT).body(result));
     }
 }
