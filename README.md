@@ -6,13 +6,13 @@ Users can place bids on active auctions and see live updates—current price, hi
 
 ## Features
 
-- 🚀 Real-time bidding with sub-second updates
-- 🔐 Atomic bid validation using Redis to prevent race conditions
-- 📡 Event-driven architecture with Kafka
-- 🌐 WebSocket-based live updates to connected clients
-- 💾 Persistent storage with PostgreSQL
-- 🎨 Modern React frontend with Next.js and TypeScript
-- 🐳 Containerized infrastructure with Docker
+-  Real-time bidding with sub-second updates
+-  Atomic bid validation using Redis to prevent race conditions
+-  Event-driven architecture with Kafka
+-  WebSocket-based live updates to connected clients
+-  Persistent storage with PostgreSQL
+-  Modern React frontend with Next.js and TypeScript
+-  Containerized infrastructure with Docker
 
 ## Architecture
 
