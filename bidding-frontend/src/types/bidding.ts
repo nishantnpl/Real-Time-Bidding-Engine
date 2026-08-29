@@ -21,6 +21,7 @@ export interface BidSocketResponse {
     auctionId: string | null;
     bidderId: string | null;
     currentHighestBid: number | null;
+    status: "OPEN" | "CLOSED" | null;
     reason: string;
 }
 

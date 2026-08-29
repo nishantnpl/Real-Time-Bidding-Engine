@@ -141,6 +141,25 @@ export default function AuctionLiveClient({
     }
 
     function handleBidSocketResponse(response: BidSocketResponse) {
+        if (response.status) {
+            setAuction((currentAuction) => {
+                if (!currentAuction || currentAuction.id !== response.auctionId) {
+                    return currentAuction;
+                }
+
+                return {
+                    ...currentAuction,
+                    status: response.status,
+                    currentHighestBid:
+                        response.currentHighestBid ??
+                        currentAuction.currentHighestBid,
+                    highestBidderId:
+                        response.bidderId ??
+                        currentAuction.highestBidderId
+                };
+            });
+        }
+
         if (response.type === "BID_ACCEPTED") {
             setErrorMessage("");
             return;
@@ -238,9 +257,12 @@ export default function AuctionLiveClient({
 
                     <button
                         type="submit"
-                        disabled={connectionStatus !== "Connected"}
+                        disabled={
+                            connectionStatus !== "Connected" ||
+                            auction?.status !== "OPEN"
+                        }
                     >
-                        Place Bid
+                        {auction?.status === "CLOSED" ? "Auction Closed" : "Place Bid"}
                     </button>
                 </form>
 

@@ -8,6 +8,7 @@ public record BidResult(
         String reason,
         UUID auctionId,
         BigDecimal currentHighestBid,
-        String highestBidderId
+        String highestBidderId,
+        AuctionStatus status
 ) {
 }

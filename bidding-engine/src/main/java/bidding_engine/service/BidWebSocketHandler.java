@@ -37,17 +37,24 @@ public class BidWebSocketHandler implements WebSocketHandler {
         sessionRegistry.add(session);
 
         Mono<Void> receiveAndProcess = session.receive()
-                .flatMap(message -> handleMessage(session, message.getPayloadAsText()))
+                .flatMap(message ->
+                        handleMessage(session, message.getPayloadAsText())
+                )
                 .then();
 
         return receiveAndProcess
                 .doFinally(signal -> sessionRegistry.remove(session));
     }
 
-    private Mono<Void> handleMessage(WebSocketSession session, String payload) {
+    private Mono<Void> handleMessage(
+            WebSocketSession session,
+            String payload
+    ) {
         try {
-            BidSocketMessage socketMessage =
-                    objectMapper.readValue(payload, BidSocketMessage.class);
+            BidSocketMessage socketMessage = objectMapper.readValue(
+                    payload,
+                    BidSocketMessage.class
+            );
 
             if (!"PLACE_BID".equals(socketMessage.type())) {
                 return sendResponse(
@@ -56,6 +63,7 @@ public class BidWebSocketHandler implements WebSocketHandler {
                                 "ERROR",
                                 socketMessage.auctionId(),
                                 socketMessage.bidderId(),
+                                null,
                                 null,
                                 "Unsupported message type"
                         )
@@ -67,7 +75,10 @@ public class BidWebSocketHandler implements WebSocketHandler {
                     socketMessage.amount()
             );
 
-            return auctionService.placeBid(socketMessage.auctionId(), bidRequest)
+            return auctionService.placeBid(
+                            socketMessage.auctionId(),
+                            bidRequest
+                    )
                     .flatMap(result -> sendBidResult(session, result));
 
         } catch (Exception exception) {
@@ -80,18 +91,23 @@ public class BidWebSocketHandler implements WebSocketHandler {
                             null,
                             null,
                             null,
+                            null,
                             "Invalid bid message"
                     )
             );
         }
     }
 
-    private Mono<Void> sendBidResult(WebSocketSession session, BidResult result) {
+    private Mono<Void> sendBidResult(
+            WebSocketSession session,
+            BidResult result
+    ) {
         BidSocketResponse response = new BidSocketResponse(
                 result.accepted() ? "BID_ACCEPTED" : "BID_REJECTED",
                 result.auctionId(),
                 result.highestBidderId(),
                 result.currentHighestBid(),
+                result.status(),
                 result.reason()
         );
 

@@ -12,14 +12,21 @@ local auction = cjson.decode(auctionJson)
 local bidAmount = tonumber(ARGV[3])
 local currentBid = tonumber(auction.currentHighestBid)
 local nowMillis = tonumber(ARGV[4])
+local endsAtMillis = tonumber(auction.endsAtEpochMillis)
 
-if auction.status ~= "OPEN" or nowMillis >= tonumber(auction.endsAtEpochMillis) then
+if auction.status ~= "OPEN" or nowMillis >= endsAtMillis then
+    if auction.status ~= "CLOSED" then
+        auction.status = "CLOSED"
+        redis.call('SET', KEYS[1], cjson.encode(auction))
+    end
+
     return cjson.encode({
         accepted = false,
         reason = "Auction is closed",
         auctionId = auction.id,
         currentHighestBid = auction.currentHighestBid,
-        highestBidderId = auction.highestBidderId
+        highestBidderId = auction.highestBidderId,
+        status = auction.status
     })
 end
 
@@ -29,7 +36,8 @@ if bidAmount <= currentBid then
         reason = "Bid amount must be higher than the current highest bid",
         auctionId = auction.id,
         currentHighestBid = auction.currentHighestBid,
-        highestBidderId = auction.highestBidderId
+        highestBidderId = auction.highestBidderId,
+        status = auction.status
     })
 end
 
@@ -43,5 +51,6 @@ return cjson.encode({
     reason = "Bid accepted",
     auctionId = auction.id,
     currentHighestBid = auction.currentHighestBid,
-    highestBidderId = auction.highestBidderId
+    highestBidderId = auction.highestBidderId,
+    status = auction.status
 })
