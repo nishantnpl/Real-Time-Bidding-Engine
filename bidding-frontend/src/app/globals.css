@@ -151,3 +151,48 @@ pre {
   border-radius: 12px;
   background: #020617;
 }
+
+.history-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.history-section h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.empty-history {
+  margin: 0;
+  color: var(--muted);
+}
+
+.history-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgb(2 6 23 / 0.6);
+}
+
+.history-item div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.history-item span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

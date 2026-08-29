@@ -31,3 +31,10 @@ export interface PlaceBidSocketMessage {
     bidderId: string;
     amount: number;
 }
+export interface BidHistoryItem {
+    id: string;
+    auctionId: string;
+    bidderId: string;
+    amount: number;
+    occurredAt: string;
+}

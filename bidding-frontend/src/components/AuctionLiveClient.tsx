@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import {
     Auction,
     BidAcceptedEvent,
+    BidHistoryItem,
     BidSocketResponse,
     PlaceBidSocketMessage
 } from "@/types/bidding";
@@ -15,6 +16,7 @@ interface AuctionLiveClientProps {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080";
 
+
 export default function AuctionLiveClient({
                                               auctionId
                                           }: AuctionLiveClientProps) {
@@ -25,6 +27,8 @@ export default function AuctionLiveClient({
     const [amount, setAmount] = useState("1700");
     const [lastMessage, setLastMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
+    const [historyError, setHistoryError] = useState("");
 
     const socketRef = useRef<WebSocket | null>(null);
 
@@ -63,7 +67,9 @@ export default function AuctionLiveClient({
             }
         }
 
+
         loadAuction();
+        loadBidHistory();
 
         const socket = new WebSocket(`${WS_URL}/ws/auctions`);
 
@@ -124,7 +130,32 @@ export default function AuctionLiveClient({
         };
     }, [auctionId]);
 
+    async function loadBidHistory() {
+        const url = `${API_URL}/api/auctions/${auctionId}/history`;
 
+        try {
+            console.log("Loading bid history from:", url);
+
+            const response = await fetch(url, {
+                method: "GET",
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Could not load bid history. HTTP status: ${response.status}`
+                );
+            }
+
+            const data: BidHistoryItem[] = await response.json();
+
+            setBidHistory(data);
+            setHistoryError("");
+        } catch (error) {
+            console.error("Bid history request failed for URL:", url, error);
+            setHistoryError("Could not load bid history");
+        }
+    }
 
     function handleBidAcceptedEvent(event: BidAcceptedEvent) {
         setAuction((currentAuction) => {
@@ -138,6 +169,10 @@ export default function AuctionLiveClient({
                 highestBidderId: event.bidderId
             };
         });
+
+        window.setTimeout(() => {
+            loadBidHistory();
+        }, 300);
     }
 
     function handleBidSocketResponse(response: BidSocketResponse) {
@@ -265,6 +300,32 @@ export default function AuctionLiveClient({
                         {auction?.status === "CLOSED" ? "Auction Closed" : "Place Bid"}
                     </button>
                 </form>
+
+                <section className="history-section">
+                    <h2>Bid History</h2>
+
+                    {historyError && (
+                        <p className="error">{historyError}</p>
+                    )}
+
+                    {!historyError && bidHistory.length === 0 && (
+                        <p className="empty-history">No persisted bids yet.</p>
+                    )}
+
+                    {bidHistory.length > 0 && (
+                        <ol className="history-list">
+                            {bidHistory.map((bid) => (
+                                <li key={bid.id} className="history-item">
+                                    <div>
+                                        <strong>{bid.bidderId}</strong>
+                                        <span>{new Date(bid.occurredAt).toLocaleString()}</span>
+                                    </div>
+                                    <strong>€{bid.amount.toFixed(2)}</strong>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </section>
 
                 {errorMessage && (
                     <p className="error">{errorMessage}</p>
